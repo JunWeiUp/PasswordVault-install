@@ -91,18 +91,34 @@ window.chromeStorageRemove = function(key) {
 
 window.addEventListener('load', function(ev) {
   console.log("🚀 window load event fired");
+  
+  // 强制使用本地 CanvasKit
+  window.flutterConfiguration = {
+    canvasKitBaseUrl: "canvaskit/"
+  };
+
   _flutter.loader.loadEntrypoint({
     serviceWorkerSettings: null,
     onEntrypointLoaded: function(engineInitializer) {
       console.log("📦 entrypoint loaded, initializing engine...");
-      engineInitializer.initializeEngine({
-        renderer: 'html',
+      
+      const config = {
+        canvasKitBaseUrl: "canvaskit/",
         useColorEmoji: true
-      }).then(function(appRunner) {
+      };
+
+      engineInitializer.initializeEngine(config).then(function(appRunner) {
         console.log("🏃 engine initialized, running app...");
         appRunner.runApp();
       }).catch(function(err) {
         console.error("❌ Engine initialization failed:", err);
+        // 如果 CanvasKit 初始化失败，尝试强制使用 HTML 渲染器
+        console.log("🔄 Retrying with HTML renderer...");
+        engineInitializer.initializeEngine({
+            renderer: 'html'
+        }).then(function(appRunner) {
+            appRunner.runApp();
+        });
       });
     }
   });
